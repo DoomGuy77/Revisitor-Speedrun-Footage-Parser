@@ -24,10 +24,15 @@ def formatTime(seconds):
     seconds %= 60
     return '%d:%02d:%02d' % (hour, minutes, seconds)
 
+def isWhite(pixel):
+    for i in pixel:
+        if i != 255:
+            return False
+    return True
 
 #Main program start
 
-#Handle arguments / Check if video is valid
+#Handle arguments
 ap = argparse.ArgumentParser()
 ap.add_argument('-v', '--videoPath', required=True, help='Path to video file')
 ap.add_argument('-t', '--tesseractPath', required=True, help='Path to tesseract.exe')
@@ -39,10 +44,65 @@ if args['checksPerSecond'] is not None:
 else:
     checksPerSecond = 4
 
+#Check video resolution and adjust values
+supportedResolutions = '1920x1080, 1680x1050, 1600x1024, 1600x900, 1440x900, 1366x768, 1360x768, 1280x800, 1280x768, 1280x800, 1280x768, 1280x720'
 video = cv2.VideoCapture(args['videoPath'])
-if not (str(int(video.get(cv2.CAP_PROP_FRAME_WIDTH))) + 'x' + str(int(video.get(cv2.CAP_PROP_FRAME_HEIGHT))) in ['1920x1080']):
-    print("Video is not a supported resolution. Currently supported resolutions: 1920x1080")
+res = str(int(video.get(cv2.CAP_PROP_FRAME_WIDTH))) + 'x' + str(int(video.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+print('Video resolution is ' + res)
+if not (res in supportedResolutions):
+    print('Video is not a supported resolution. Currently supported resolutions: ' + supportedResolutions)
     sys.exit(0)
+
+if res == '1920x1080':
+    mX = 621 #X pos of M from mission complete screen
+    mY = 86 #Y pos of M from mission complete screen
+    cP1 = 811 #Crop starting pos
+    cP2 = 869 #crop ending pos
+elif res == '1680x1050':
+    mY = 83
+    mX = 510
+    cP1 = 788
+    cP2 = 845
+elif res == '1600x1024':
+    mY = 80
+    mX = 477
+    cP1 = 769
+    cP2 = 824
+elif res == '1600x900':
+    mY = 70
+    mX =474
+    cP1 = 676
+    cP2 = 723
+elif res == '1440x900':
+    mY = 70
+    mX = 435
+    cP1 = 676
+    cP2 = 723
+elif res == '1366x768':
+    mY = 61
+    mX = 440
+    cP1 = 577
+    cP2 = 617
+elif res == '1360x768':
+    mY = 61
+    mX = 437
+    cP1 = 577
+    cP2 = 617
+elif res == '1280x800':
+    mY = 6
+    mX = 389
+    cP1 = 601
+    cP2 = 643
+elif res == '1280x768':
+    mY = 62
+    mX =396
+    cP1 = 577
+    cP2 = 617
+elif res == '1280x720':
+    mY = 57
+    mX = 413
+    cP1 = 541
+    cP2 = 579
 
 #Check for speedrun timer x times every second
 counter = 0
@@ -54,9 +114,10 @@ while True:
     if counter >= fps/checksPerSecond:
         if not grabbed:
             break
-        if numpy.all(frame[86,621] == [255,255,251]):
+        #Check for M on mission complete screen. 
+        if isWhite(frame[mY,mX]):
             print('Found Mission complete screen at frame ' + str(video.get(cv2.CAP_PROP_POS_FRAMES)))
-            crop = frame[811:869]
+            crop = frame[cP1:cP2]
             grey = cv2.cvtColor(crop, cv2.COLOR_BGR2GRAY)
             text = pytesseract.image_to_string(grey)
             #print(text)
