@@ -40,7 +40,7 @@ ap.add_argument('-c', '--checksPerSecond', required =False, help='How many times
 args = vars(ap.parse_args())
 pytesseract.pytesseract.tesseract_cmd = args['tesseractPath']
 if args['checksPerSecond'] is not None:
-    checksPerSecond = args['checksPerSecond']
+    checksPerSecond = int(args['checksPerSecond'])
 else:
     checksPerSecond = 4
 
